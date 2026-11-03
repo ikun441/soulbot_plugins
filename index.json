@@ -1,4 +1,20 @@
 {
   "format": 1,
-  "plugins": []
+  "plugins": [
+    {
+      "id": "service_host",
+      "path": "plugins/service_host",
+      "name": "第三方服务托管",
+      "author": "ikun441",
+      "version": "v0.1.0",
+      "info": "适用于 SoulBot v2.0.4+。管理员统一配置、启动、停止、重启和查看 NapCat、ComfyUI、meme-generator、本地 TTS、本地 LLM 及自定义服务；提供本地健康检查、详情、脱敏日志和幂等进程管理。只管理本插件启动的前台进程，不接管已有服务，不自动安装系统组件。",
+      "files": {
+        "config.yaml": "cec01208a0ec6f49932a30e1676f3655f6f1fd71bdbb8d37ecd6e8d6c64a00d2",
+        "plugin.py": "d938cb7c1b102c4b216830c5dc09f19e24dd62a482c106950021aba46e0c1fbf",
+        "controller.py": "775535cfb7170b86d0537256ae96c63e3fbe0af56cabcb46978ae5f7467ccbee",
+        "README.md": "2337cb5449e57cb9f73380ceb957a26c2064f7840544a9a1eb4614d27151755d",
+        "LICENSE": "05c77a2073f0aaa7aa35c287a77a63a75eeb305fcbf3fab1cb65a0ad92e98f5d"
+      }
+    }
+  ]
 }

@@ -1,0 +1,245 @@
+api_version: 1
+define:
+  name: 第三方服务托管
+  author: ikun441
+  version: v0.1.0
+  info: 适用于 SoulBot v2.0.4+。管理员统一配置、启动、停止、重启和查看 NapCat、ComfyUI、meme-generator、本地 TTS、本地
+    LLM 及自定义服务；提供本地健康检查、详情、脱敏日志和幂等进程管理。只管理本插件启动的前台进程，不接管已有服务，不自动安装系统组件。
+parameters:
+  napcat_enabled:
+    type: boolean
+    label: NapCat · 允许托管
+    default: false
+    description: 仅允许管理员手动启动，不会在启用插件时自动运行。
+  napcat_executable:
+    type: string
+    label: NapCat · 可执行文件
+    default: ''
+    max_length: 1024
+    description: 填写绝对路径，例如该服务独立虚拟环境的 python 或 Ollama 可执行文件。
+  napcat_directory:
+    type: string
+    label: NapCat · 工作目录
+    default: ''
+    max_length: 1024
+    description: 填写已安装服务的绝对目录；不下载模型，不修改上游配置文件。
+  napcat_arguments:
+    type: string
+    label: NapCat · 启动参数（JSON 数组）
+    default: '[]'
+    max_length: 8192
+    description: 使用前台进程，例如 ["main.py","--port","8188"]。不填写 Shell 命令，参数中不要放密钥。
+  napcat_port:
+    type: integer
+    label: NapCat · 检测端口
+    default: 6099
+    minimum: 1024
+    maximum: 65535
+    description: 仅检测本机 127.0.0.1；端口必须与服务实际监听一致。
+  napcat_environment:
+    type: string
+    label: NapCat · 私密环境变量（JSON 对象）
+    default: ''
+    secret: true
+    max_length: 8192
+    description: 可填密钥、模型目录等环境变量，如 {"OLLAMA_HOST":"127.0.0.1:11434"}。独立私有存储，普通接口不回传。
+  comfyui_enabled:
+    type: boolean
+    label: ComfyUI · 允许托管
+    default: false
+    description: 仅允许管理员手动启动，不会在启用插件时自动运行。
+  comfyui_executable:
+    type: string
+    label: ComfyUI · 可执行文件
+    default: ''
+    max_length: 1024
+    description: 填写绝对路径，例如该服务独立虚拟环境的 python 或 Ollama 可执行文件。
+  comfyui_directory:
+    type: string
+    label: ComfyUI · 工作目录
+    default: ''
+    max_length: 1024
+    description: 填写已安装服务的绝对目录；不下载模型，不修改上游配置文件。
+  comfyui_arguments:
+    type: string
+    label: ComfyUI · 启动参数（JSON 数组）
+    default: '["main.py", "--listen", "127.0.0.1", "--port", "8188"]'
+    max_length: 8192
+    description: 使用前台进程，例如 ["main.py","--port","8188"]。不填写 Shell 命令，参数中不要放密钥。
+  comfyui_port:
+    type: integer
+    label: ComfyUI · 检测端口
+    default: 8188
+    minimum: 1024
+    maximum: 65535
+    description: 仅检测本机 127.0.0.1；端口必须与服务实际监听一致。
+  comfyui_environment:
+    type: string
+    label: ComfyUI · 私密环境变量（JSON 对象）
+    default: ''
+    secret: true
+    max_length: 8192
+    description: 可填密钥、模型目录等环境变量，如 {"OLLAMA_HOST":"127.0.0.1:11434"}。独立私有存储，普通接口不回传。
+  meme_enabled:
+    type: boolean
+    label: meme-generator · 允许托管
+    default: false
+    description: 仅允许管理员手动启动，不会在启用插件时自动运行。
+  meme_executable:
+    type: string
+    label: meme-generator · 可执行文件
+    default: ''
+    max_length: 1024
+    description: 填写绝对路径，例如该服务独立虚拟环境的 python 或 Ollama 可执行文件。
+  meme_directory:
+    type: string
+    label: meme-generator · 工作目录
+    default: ''
+    max_length: 1024
+    description: 填写已安装服务的绝对目录；不下载模型，不修改上游配置文件。
+  meme_arguments:
+    type: string
+    label: meme-generator · 启动参数（JSON 数组）
+    default: '["run"]'
+    max_length: 8192
+    description: 使用前台进程，例如 ["main.py","--port","8188"]。不填写 Shell 命令，参数中不要放密钥。
+  meme_port:
+    type: integer
+    label: meme-generator · 检测端口
+    default: 2233
+    minimum: 1024
+    maximum: 65535
+    description: 仅检测本机 127.0.0.1；端口必须与服务实际监听一致。
+  meme_environment:
+    type: string
+    label: meme-generator · 私密环境变量（JSON 对象）
+    default: ''
+    secret: true
+    max_length: 8192
+    description: 可填密钥、模型目录等环境变量，如 {"OLLAMA_HOST":"127.0.0.1:11434"}。独立私有存储，普通接口不回传。
+  tts_enabled:
+    type: boolean
+    label: 本地 TTS · 允许托管
+    default: false
+    description: 仅允许管理员手动启动，不会在启用插件时自动运行。
+  tts_executable:
+    type: string
+    label: 本地 TTS · 可执行文件
+    default: ''
+    max_length: 1024
+    description: 填写绝对路径，例如该服务独立虚拟环境的 python 或 Ollama 可执行文件。
+  tts_directory:
+    type: string
+    label: 本地 TTS · 工作目录
+    default: ''
+    max_length: 1024
+    description: 填写已安装服务的绝对目录；不下载模型，不修改上游配置文件。
+  tts_arguments:
+    type: string
+    label: 本地 TTS · 启动参数（JSON 数组）
+    default: '[]'
+    max_length: 8192
+    description: 使用前台进程，例如 ["main.py","--port","8188"]。不填写 Shell 命令，参数中不要放密钥。
+  tts_port:
+    type: integer
+    label: 本地 TTS · 检测端口
+    default: 8880
+    minimum: 1024
+    maximum: 65535
+    description: 仅检测本机 127.0.0.1；端口必须与服务实际监听一致。
+  tts_environment:
+    type: string
+    label: 本地 TTS · 私密环境变量（JSON 对象）
+    default: ''
+    secret: true
+    max_length: 8192
+    description: 可填密钥、模型目录等环境变量，如 {"OLLAMA_HOST":"127.0.0.1:11434"}。独立私有存储，普通接口不回传。
+  llm_enabled:
+    type: boolean
+    label: 本地 LLM / Ollama · 允许托管
+    default: false
+    description: 仅允许管理员手动启动，不会在启用插件时自动运行。
+  llm_executable:
+    type: string
+    label: 本地 LLM / Ollama · 可执行文件
+    default: ''
+    max_length: 1024
+    description: 填写绝对路径，例如该服务独立虚拟环境的 python 或 Ollama 可执行文件。
+  llm_directory:
+    type: string
+    label: 本地 LLM / Ollama · 工作目录
+    default: ''
+    max_length: 1024
+    description: 填写已安装服务的绝对目录；不下载模型，不修改上游配置文件。
+  llm_arguments:
+    type: string
+    label: 本地 LLM / Ollama · 启动参数（JSON 数组）
+    default: '["serve"]'
+    max_length: 8192
+    description: 使用前台进程，例如 ["main.py","--port","8188"]。不填写 Shell 命令，参数中不要放密钥。
+  llm_port:
+    type: integer
+    label: 本地 LLM / Ollama · 检测端口
+    default: 11434
+    minimum: 1024
+    maximum: 65535
+    description: 仅检测本机 127.0.0.1；端口必须与服务实际监听一致。
+  llm_environment:
+    type: string
+    label: 本地 LLM / Ollama · 私密环境变量（JSON 对象）
+    default: ''
+    secret: true
+    max_length: 8192
+    description: 可填密钥、模型目录等环境变量，如 {"OLLAMA_HOST":"127.0.0.1:11434"}。独立私有存储，普通接口不回传。
+  custom_enabled:
+    type: boolean
+    label: 自定义服务 · 允许托管
+    default: false
+    description: 仅允许管理员手动启动，不会在启用插件时自动运行。
+  custom_executable:
+    type: string
+    label: 自定义服务 · 可执行文件
+    default: ''
+    max_length: 1024
+    description: 填写绝对路径，例如该服务独立虚拟环境的 python 或 Ollama 可执行文件。
+  custom_directory:
+    type: string
+    label: 自定义服务 · 工作目录
+    default: ''
+    max_length: 1024
+    description: 填写已安装服务的绝对目录；不下载模型，不修改上游配置文件。
+  custom_arguments:
+    type: string
+    label: 自定义服务 · 启动参数（JSON 数组）
+    default: '[]'
+    max_length: 8192
+    description: 使用前台进程，例如 ["main.py","--port","8188"]。不填写 Shell 命令，参数中不要放密钥。
+  custom_port:
+    type: integer
+    label: 自定义服务 · 检测端口
+    default: 8000
+    minimum: 1024
+    maximum: 65535
+    description: 仅检测本机 127.0.0.1；端口必须与服务实际监听一致。
+  custom_environment:
+    type: string
+    label: 自定义服务 · 私密环境变量（JSON 对象）
+    default: ''
+    secret: true
+    max_length: 8192
+    description: 可填密钥、模型目录等环境变量，如 {"OLLAMA_HOST":"127.0.0.1:11434"}。独立私有存储，普通接口不回传。
+  startup_seconds:
+    type: integer
+    label: 启动就绪等待秒数
+    default: 15
+    minimum: 1
+    maximum: 45
+    description: 超时保留正在加载的受管进程，不重复启动；稍后刷新状态。
+  stop_seconds:
+    type: integer
+    label: 优雅停止等待秒数
+    default: 5
+    minimum: 1
+    maximum: 10
+    description: 仅停止本插件当前持有的子进程；POSIX 同时清理该子进程组。
+config: {}

@@ -1,6 +1,6 @@
 # SoulBot 插件开发规范 v1
 
-文档日期：2026-10-30。本文是插件加载器与插件市场的实现契约；执行端仍在开发，实际支持状态以 SoulBot 已发布版本为准。
+文档日期：2026-10-30。本文是插件加载器与插件市场的实现契约。基本加载器自 SoulBot v2.0.3 提供，以下可选管理扩展需要 v2.0.4。
 
 ## 1. 单文件夹包
 
@@ -107,7 +107,7 @@ def register(api):
 
 `schema` 为 Pydantic BaseModel 类型，`handler` 为异步函数，接收已验证参数与服务端创建的 ToolContext。`timeout` 为 1—120 秒，`max_calls` 为 1—5。工具返回有界、可 JSON 序列化的结构化数据，不返回任意路径、原始 HTML 或不可验证的平台成功声明。
 
-`permission` 可声明 `deny`、`auto` 或 `approval`，默认 `approval`。最终执行策略由管理员控制，插件不能自行批准或把模型参数当作授权。首版仅提供工具注册，不提供任意消息事件订阅或后台自启动回调。
+`permission` 可声明 `deny`、`auto` 或 `approval`，默认 `approval`。最终执行策略由管理员控制，插件不能自行批准或把模型参数当作授权。基本接口提供工具注册；v2.0.4 的可选管理员操作与清理扩展见第 7 节。没有任意消息事件订阅或自动启动服务回调。
 
 ## 4. 生命周期、记忆与外发
 
@@ -156,3 +156,18 @@ Python 插件在当前系统用户权限下执行。SDK 的工具权限并非系
 发布前应验证 YAML/参数边界、元数据完整性、版本格式、索引摘要、启用/禁用、错误参数、超时及拒绝/审批策略。普通参数和密钥的保存读取须分别测试；不能用空实现或伪造网络结果声明插件可用。
 
 提交内容只包含插件源代码、元数据、说明、许可和索引。禁止上传 `.env`、真实密钥、登录 Cookie、用户参数覆盖值、聊天数据库、日志、缓存、虚拟环境与第三方模型文件。
+
+
+## 7. v2.0.4 管理扩展
+
+`api.admin_action(name=..., label=..., description=..., schema=PydanticModel, handler=async_handler, mutating=False, timeout=30)` 注册仅管理员可调用的操作，最多 12 项，超时 1—120 秒。handler 只接收验证后的参数对象，不接收模型身份；不会加入模型工具列表。也允许仅注册管理员操作的插件。
+
+宿主从 `/api/plugins` 返回名称、说明、mutating 和 JSON Schema，统一渲染原生表单。`POST /api/plugins/{id}/actions/{name}` 提交 `revision`、`values` 和 `confirmed`；写操作必须 `confirmed=true`，并核对管理员会话、来源、当前启用状态、代码摘要及配置 revision。配置保存不等于执行管理操作。审计仅记录插件 ID 与操作名，不记录参数或结果正文。
+
+结果最大 64KiB，可包含 `message`、`text`（脱敏日志）、`cards`。每张卡片使用 `title`、`status`、`subtitle`、`fields: [{label,value}]`、`links: [{label,url}]`、`actions: [{name,values}]`；动作须已注册，链接限 http/https。所有文本由宿主转义，不执行插件 HTML/JS。
+
+`api.data_directory` 为私有 `data/plugins/<id>/`。状态、锁和日志写入此目录，禁止写回插件源包。第三方程序或模型须使用管理员配置的安装目录，不能把虚拟环境装进插件包。
+
+`api.on_close(async_cleanup)` 最多注册一个清理回调，在禁用插件或宿主正常关闭时调用，宿主最多等待 20 秒。插件负责取消并等待其内部任务，清理仅能针对自己确实持有的资源；不提供开机自动启动回调。宿主崩溃不能保证执行清理，插件必须说明恢复规则，不得凭旧 PID 文件终止其他进程。
+
+SDK 的这些控制仍不是 OS 沙箱。不能向模型暴露任意 Shell、启动参数、外部服务密钥或未经清理的日志。
