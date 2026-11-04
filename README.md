@@ -6,7 +6,7 @@
 
 | 插件 | 版本 | 宿主要求 | 功能 |
 | --- | --- | --- | --- |
-| [第三方服务托管](plugins/service_host/README.md) | v0.1.1 | SoulBot v2.0.4+ | NapCat、ComfyUI、meme-generator、本地 TTS/LLM 与自定义服务的配置、启动、停止、重启、状态、详情和脱敏日志 |
+| [第三方服务托管](plugins/service_host/README.md) | v0.2.0 | SoulBot v2.0.4+ | NapCat、ComfyUI、meme-generator、本地 TTS/LLM 与自定义服务的官方下载、源码解压、配置引导、启动、停止、重启、状态、详情和脱敏日志 |
 
 在 SoulBot“插件市场”刷新索引并安装，核对来源后启用。服务不会随安装自动启动，实际启动须管理员保存配置并确认。
 
@@ -28,3 +28,11 @@ soulbot_plugins/
 ```
 
 本仓库只发布源代码，不包含上游程序、模型文件或运行数据。安装、启用和权限授权分开执行；刷新市场目录不会执行 Python 代码。
+
+
+## v0.2.0 验证记录（2026-11-04）
+
+- 主程序与插件合计 504 项 Python 回归通过，覆盖固定提交下载、原生包选择、摘要复核、危险重定向拦截、目录穿越、取消清理和中断恢复。
+- 本地管理 API 的 NapCat、ComfyUI、meme-generator、Kokoro-FastAPI、Ollama 五类引导均通过；浏览器可显示新版引导。
+- 真实下载 MemeCrafters/meme-generator v0.1.14 源码，固定提交 f5ee44f6a3e134b9ac54032f97eab788d6454e3c，324863147 字节，SHA-256 为 a535119b0388a31deb5d8ca34a0f1e735947e45d995d60f1cc52a0023bda7f80；安全解压与后续配置引导通过。没有执行下载内容或安装模型。
+- 下载不等同于第三方软件已经完成安装和业务验收；GPU 依赖、模型、QQ 登录及原生安装包仍按对应平台引导准备。

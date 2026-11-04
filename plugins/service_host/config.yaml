@@ -2,9 +2,9 @@ api_version: 1
 define:
   name: 第三方服务托管
   author: ikun441
-  version: v0.1.1
-  info: 适用于 SoulBot v2.0.4+。管理员统一配置、启动、停止、重启和查看 NapCat、ComfyUI、meme-generator、本地 TTS、本地
-    LLM 及自定义服务；提供本地健康检查、详情、脱敏日志和幂等进程管理。只管理本插件启动的前台进程，不接管已有服务，不自动安装系统组件。
+  version: v0.2.0
+  info: 官方第三方服务下载、后台进度/取消、源码解压、逐步配置引导，以及 NapCat、ComfyUI、meme-generator、本地 TTS/LLM
+    与自定义服务的启停管理。需要 SoulBot v2.0.4+。下载不会自动运行安装程序或下载模型。
 parameters:
   napcat_enabled:
     type: boolean
@@ -242,4 +242,11 @@ parameters:
     minimum: 1
     maximum: 10
     description: 仅停止本插件当前持有的子进程；POSIX 同时清理该子进程组。
+  download_max_mb:
+    type: integer
+    label: 单个服务下载上限（MiB）
+    default: 2048
+    minimum: 64
+    maximum: 4096
+    description: 下载前检查空间；源码和模型/GPU 依赖分开准备。
 config: {}

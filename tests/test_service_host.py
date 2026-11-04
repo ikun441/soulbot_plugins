@@ -185,7 +185,7 @@ def test_actual_host_plugin_sdk_and_stop_on_disable(tmp_path, setup):
         services.plugins.configure("service_host", 0, values, secrets, [], "approval")
         await services.plugins.enable("service_host", 1)
         item = services.plugins.listing()["items"][0]
-        assert len(item["admin_actions"]) == 6 and item["enabled"]
+        assert len(item["admin_actions"]) == 11 and item["enabled"]
         assert item["secrets"]["custom_environment"] and "private-fixture-value" not in json.dumps(
             item
         )

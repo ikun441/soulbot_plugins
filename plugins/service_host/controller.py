@@ -115,9 +115,16 @@ class ServiceController:
             from ctypes import wintypes
 
             kernel = ctypes.WinDLL("kernel32", use_last_error=True)
-            kernel.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+            kernel.OpenProcess.argtypes = [
+                wintypes.DWORD,
+                wintypes.BOOL,
+                wintypes.DWORD,
+            ]
             kernel.OpenProcess.restype = wintypes.HANDLE
-            kernel.GetExitCodeProcess.argtypes = [wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD)]
+            kernel.GetExitCodeProcess.argtypes = [
+                wintypes.HANDLE,
+                ctypes.POINTER(wintypes.DWORD),
+            ]
             kernel.GetExitCodeProcess.restype = wintypes.BOOL
             kernel.CloseHandle.argtypes = [wintypes.HANDLE]
             handle = kernel.OpenProcess(0x1000, False, pid)
@@ -239,17 +246,31 @@ class ServiceController:
                 "status": row["state"],
                 "subtitle": "本机 127.0.0.1:" + str(row["port"]),
                 "fields": [
-                    {"label": "托管许可", "value": "已开启" if row["allowed"] else "未开启"},
-                    {"label": "进程归属", "value": "本插件" if row["owned"] else "外部或未启动"},
+                    {
+                        "label": "托管许可",
+                        "value": "已开启" if row["allowed"] else "未开启",
+                    },
+                    {
+                        "label": "进程归属",
+                        "value": "本插件" if row["owned"] else "外部或未启动",
+                    },
                     {"label": "PID", "value": str(row["pid"] or "—")},
                 ],
                 "actions": [
                     {"name": name, "values": {"service": row["service"]}}
                     for name in (
-                        ["details", "logs", "stop", "restart"]
+                        [
+                            "guide",
+                            "download_status",
+                            "details",
+                            "logs",
+                            "stop",
+                            "restart",
+                        ]
                         if row["owned"]
-                        else ["details", "logs", "start"]
+                        else ["guide", "download_status", "details", "logs", "start"]
                     )
+                    if row["service"] != "custom" or name not in {"guide", "download_status"}
                 ],
             }
             for row in rows
@@ -270,31 +291,33 @@ class ServiceController:
         health = {"tcp": row["reachable"], "http_status": None, "version": None}
         if row["reachable"]:
             try:
-                async with httpx.AsyncClient(
-                    trust_env=False, follow_redirects=False, timeout=2
-                ) as client:
-                    async with client.stream(
-                        "GET", f"http://127.0.0.1:{row['port']}{endpoint}"
-                    ) as response:
-                        health["http_status"] = response.status_code
-                        data = bytearray()
-                        async for chunk in response.aiter_bytes():
-                            data.extend(chunk)
-                            if len(data) > 262144:
-                                raise ValueError("探测响应过大")
-                        if response.status_code == 200 and service in {"meme", "comfyui", "llm"}:
-                            value = json.loads(data)
-                            version = (
-                                value
-                                if service == "meme" and isinstance(value, str)
-                                else value.get("version")
-                                if service == "llm" and isinstance(value, dict)
-                                else value.get("system", {}).get("comfyui_version")
-                                if service == "comfyui" and isinstance(value, dict)
-                                else None
-                            )
-                            if isinstance(version, str):
-                                health["version"] = version[:80]
+                async with (
+                    httpx.AsyncClient(trust_env=False, follow_redirects=False, timeout=2) as client,
+                    client.stream("GET", f"http://127.0.0.1:{row['port']}{endpoint}") as response,
+                ):
+                    health["http_status"] = response.status_code
+                    data = bytearray()
+                    async for chunk in response.aiter_bytes():
+                        data.extend(chunk)
+                        if len(data) > 262144:
+                            raise ValueError("探测响应过大")
+                    if response.status_code == 200 and service in {
+                        "meme",
+                        "comfyui",
+                        "llm",
+                    }:
+                        value = json.loads(data)
+                        version = (
+                            value
+                            if service == "meme" and isinstance(value, str)
+                            else value.get("version")
+                            if service == "llm" and isinstance(value, dict)
+                            else value.get("system", {}).get("comfyui_version")
+                            if service == "comfyui" and isinstance(value, dict)
+                            else None
+                        )
+                        if isinstance(version, str):
+                            health["version"] = version[:80]
             except (httpx.HTTPError, ValueError, TypeError, AttributeError):
                 health["note"] = "端口可达，但没有取得已识别的版本；不代表业务接口可用。"
         fields = [
@@ -314,7 +337,10 @@ class ServiceController:
         card["links"] = ([{"label": "官方安装与配置说明", "url": docs}] if docs else []) + [
             {"label": "打开本地服务", "url": f"http://127.0.0.1:{row['port']}"}
         ]
-        return {"message": name + " · TCP 可达与实际服务能力分别显示。", "cards": [card]}
+        return {
+            "message": name + " · TCP 可达与实际服务能力分别显示。",
+            "cards": [card],
+        }
 
     def redact(self, text, service):
         for value in self.environments.get(service, {}).values():
@@ -504,7 +530,12 @@ class ServiceController:
                     pass
                 await process.wait()
         self.save(
-            service, {**self.state(service), "status": "exited", "exit_code": process.returncode}
+            service,
+            {
+                **self.state(service),
+                "status": "exited",
+                "exit_code": process.returncode,
+            },
         )
 
     async def finish_tasks(self, service):

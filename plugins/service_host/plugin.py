@@ -5,6 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict
 
 from .controller import ServiceController
+from .packages import Packages
 
 
 class Empty(BaseModel):
@@ -15,11 +16,59 @@ class ServiceArgs(Empty):
     service: Literal["napcat", "comfyui", "meme", "tts", "llm", "custom"]
 
 
+class PackageArgs(Empty):
+    service: Literal["napcat", "comfyui", "meme", "tts", "llm"]
+
+
+class DownloadArgs(PackageArgs):
+    variant: Literal["auto", "source", "windows", "macos", "linux_amd64", "linux_arm64"] = "auto"
+
+
 def register(api):
     if not hasattr(api, "admin_action") or not hasattr(api, "data_directory"):
         raise ValueError("第三方服务托管需要 SoulBot v2.0.4 或更新版本")
     controller = ServiceController(api)
-    api.on_close(controller.close)
+    packages = Packages(api)
+
+    async def close():
+        await packages.close()
+        await controller.close()
+
+    api.on_close(close)
+
+    async def guide(args):
+        return packages.guide(args.service)
+
+    async def download(args):
+        return packages.begin(args.service, args.variant)
+
+    async def download_status(args):
+        return packages.status(args.service)
+
+    async def cancel_download(args):
+        return await packages.cancel(args.service)
+
+    async def unpack(args):
+        if packages.task and not packages.task.done():
+            raise ValueError("请等待下载完成")
+        return await packages.unpack(args.service)
+
+    for name, label, handler, schema, mutating in [
+        ("guide", "下载与配置引导", guide, PackageArgs, False),
+        ("download", "下载服务", download, DownloadArgs, True),
+        ("download_status", "下载进度与结果", download_status, PackageArgs, False),
+        ("cancel_download", "取消下载", cancel_download, PackageArgs, True),
+        ("unpack", "解压源码", unpack, PackageArgs, True),
+    ]:
+        api.admin_action(
+            name=name,
+            label=label,
+            description="从固定官方来源准备服务文件；不会执行安装程序或覆盖已有配置。",
+            schema=schema,
+            handler=handler,
+            mutating=mutating,
+            timeout=120,
+        )
 
     async def overview(args):
         return await controller.overview()
