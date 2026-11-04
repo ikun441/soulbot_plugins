@@ -126,7 +126,8 @@ def test_crash_is_recorded_and_shell_text_is_not_interpreted(setup):
     asyncio.run(scenario())
 
 
-def test_cancelled_start_closes_owned_process(setup):
+@pytest.mark.parametrize("_attempt", range(10))
+def test_cancelled_start_closes_owned_process(setup, _attempt):
     controller, cfg, _ = setup
     cfg["custom_arguments"] = json.dumps(["-c", "import time;time.sleep(30)"])
     cfg["startup_seconds"] = 20

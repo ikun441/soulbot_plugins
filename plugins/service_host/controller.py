@@ -146,6 +146,10 @@ class ServiceController:
             return True
         except (OSError, TimeoutError):
             return False
+        finally:
+            task = asyncio.current_task()
+            if task is not None and task.cancelling():
+                raise asyncio.CancelledError
 
     def configuration(self, service):
         cfg = self.api.params

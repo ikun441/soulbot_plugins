@@ -6,7 +6,7 @@
 
 | 插件 | 版本 | 宿主要求 | 功能 |
 | --- | --- | --- | --- |
-| [第三方服务托管](plugins/service_host/README.md) | v0.1.0 | SoulBot v2.0.4+ | NapCat、ComfyUI、meme-generator、本地 TTS/LLM 与自定义服务的配置、启动、停止、重启、状态、详情和脱敏日志 |
+| [第三方服务托管](plugins/service_host/README.md) | v0.1.1 | SoulBot v2.0.4+ | NapCat、ComfyUI、meme-generator、本地 TTS/LLM 与自定义服务的配置、启动、停止、重启、状态、详情和脱敏日志 |
 
 在 SoulBot“插件市场”刷新索引并安装，核对来源后启用。服务不会随安装自动启动，实际启动须管理员保存配置并确认。
 
